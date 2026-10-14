@@ -1,0 +1,5 @@
+data/
+qr_codes/
+fotos_partes/
+_pycache_/
+*.pyc
