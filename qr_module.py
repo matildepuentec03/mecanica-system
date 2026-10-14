@@ -1,21 +1,34 @@
 import qrcode
 import os
-import cv2
-from pyzbar.pyzbar import decode
+
+# Intentamos importar cv2 y pyzbar, pero si fallan (ej. en la nube), no rompemos la app
+try:
+    import cv2
+    from pyzbar.pyzbar import decode
+    CAMARA_DISPONIBLE = True
+except ImportError:
+    CAMARA_DISPONIBLE = False
 
 QR_DIR = "qr_codes"
 
 def generar_qr(codigo):
     """Genera un PNG con el código QR que se pegará en la pieza física."""
     os.makedirs(QR_DIR, exist_ok=True)
-    img = qrcode.make(codigo)       # el contenido es solo el código, ej: MOT-001
+    img = qrcode.make(codigo)
     ruta = os.path.join(QR_DIR, f"{codigo}.png")
     img.save(ruta)
     print(f"✅ QR generado: {ruta}")
     return ruta
 
 def escanear_qr():
-    """Abre la webcam y devuelve el texto del primer QR detectado."""
+    """
+    Abre la webcam y devuelve el texto del primer QR detectado.
+    Solo funciona en local. En la nube (Streamlit Cloud) retorna None.
+    """
+    if not CAMARA_DISPONIBLE:
+        print("⚠️ Escaneo con cámara no disponible en este entorno.")
+        return None
+    
     cap = cv2.VideoCapture(0)
     print("📷 Apunta la cámara al QR. Presiona 'q' para salir.")
     codigo_detectado = None
@@ -25,7 +38,6 @@ def escanear_qr():
             break
         for obj in decode(frame):
             codigo_detectado = obj.data.decode("utf-8")
-            # Dibuja un rectángulo alrededor del QR
             pts = obj.polygon
             if len(pts) == 4:
                 import numpy as np
@@ -38,4 +50,4 @@ def escanear_qr():
             break
     cap.release()
     cv2.destroyAllWindows()
-    return codigo_detectad
+    return codigo_detectado
