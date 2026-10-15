@@ -250,158 +250,240 @@ with st.sidebar:
     st.caption("💡 *Tip:* Usa la cámara de tu celular para escanear los QR pegados en las piezas del motor.")
 
 # ==========================================================
-# SECCIÓN INICIO
+# SECCIÓN INICIO (Estilo App Móvil)
 # ==========================================================
 if menu == "🏠 Inicio":
-    st.markdown("## 🏁 Bienvenido al Taller Digital")
-    col1, col2 = st.columns([2, 1])
     
+    # --- HEADER AZUL CON SALUDO ---
+    st.markdown("""
+    <div style="background: linear-gradient(180deg, #1C2A45 0%, #253859 100%);
+                padding: 1.2rem; border-radius: 15px; margin-bottom: 20px;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.15);">
+        <div style="display: flex; align-items: center; justify-content: center;
+                    margin-bottom: 15px; padding-bottom: 12px;
+                    border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <span style="font-size: 1.6rem; margin-right: 10px;">⚙️</span>
+            <h2 style="margin: 0; color: white; font-size: 1.3rem;
+                       letter-spacing: 2px; font-weight: 700;">MECÁNICA SYSTEM</h2>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <div style="width: 55px; height: 55px; background: #F4B41A;
+                        border-radius: 50%; display: flex; align-items: center;
+                        justify-content: center; font-size: 1.8rem; margin-right: 15px;">
+                👨‍🔧
+            </div>
+            <div>
+                <p style="margin: 0; font-size: 0.85rem; color: #A8B2BD;">Hola,</p>
+                <h3 style="margin: 0; color: white; font-size: 1.4rem;
+                           font-weight: 700;">Estudiante</h3>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # --- BOTÓN AMARILLO DE ESCANEAR QR ---
+    st.markdown("""
+    <style>
+        div.stButton > button {
+            background: linear-gradient(90deg, #F4B41A 0%, #E8A317 100%) !important;
+            color: #1C2A45 !important;
+            font-size: 1.15rem !important;
+            font-weight: 800 !important;
+            padding: 1.1rem 1.5rem !important;
+            border-radius: 12px !important;
+            border: none !important;
+            box-shadow: 0 6px 18px rgba(244, 180, 26, 0.4) !important;
+            width: 100% !important;
+            letter-spacing: 1px !important;
+        }
+        div.stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(244, 180, 26, 0.6) !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    if st.button("📷  ESCANEAR CÓDIGO QR", use_container_width=True, key="btn_qr_inicio"):
+        st.info("💡 Apunta la cámara de tu celular al QR pegado en la pieza. Luego busca el código en la sección *Autopartes*.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # --- MÓDULOS (CUADRÍCULA 2x2) ---
+    st.markdown("#### Módulos")
+    
+    col1, col2 = st.columns(2)
     with col1:
         st.markdown("""
-        Esta plataforma fusiona la *tecnología móvil* con la *formación técnica automotriz*.
-        
-        #### ¿Qué puedes hacer?
-        - 🔩 *Consultar fichas técnicas* de cada pieza del motor mediante código QR.
-        - 🚗 *Registrar vehículos* por placa y llevar su historial.
-        - 🗓️ *Programar mantenimientos* con recordatorios automáticos.
-        - 🎓 *Guiar prácticas* de taller vinculando teoría y hardware real.
-        """)
-        
-        st.info("👈 *Navega en el menú lateral* para comenzar a usar cada módulo.")
-    
+        <div style="background: linear-gradient(135deg, #2E3440 0%, #3A4150 100%);
+                    padding: 1.3rem 1rem; border-radius: 14px; text-align: center;
+                    color: white; height: 130px; display: flex;
+                    flex-direction: column; justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <span style="font-size: 2rem;">🔩</span>
+            <p style="margin-top: 10px; font-weight: 700; margin-bottom: 0;
+                      font-size: 0.9rem; line-height: 1.2;">
+                Biblioteca de<br>Autopartes
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
     with col2:
         st.markdown("""
-        <div class="ficha-card">
-            <h2>🎯 Estado del Sistema</h2>
-            <div class="ficha-item">
-                <div class="label">Base de datos</div>
-                <div class="value">✅ Conectada</div>
-            </div>
-            <div class="ficha-item">
-                <div class="label">Última actualización</div>
-                <div class="value">""" + datetime.now().strftime("%d/%m/%Y %H:%M") + """</div>
-            </div>
-            <div class="ficha-item">
-                <div class="label">Versión</div>
-                <div class="value">2.0 PRO</div>
-            </div>
+        <div style="background: linear-gradient(135deg, #2E3440 0%, #3A4150 100%);
+                    padding: 1.3rem 1rem; border-radius: 14px; text-align: center;
+                    color: white; height: 130px; display: flex;
+                    flex-direction: column; justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <span style="font-size: 2rem;">⚠️</span>
+            <p style="margin-top: 10px; font-weight: 700; margin-bottom: 0;
+                      font-size: 0.9rem; line-height: 1.2;">
+                Diagnóstico<br>de Fallas
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    col3, col4 = st.columns(2)
+    with col3:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #2E3440 0%, #3A4150 100%);
+                    padding: 1.3rem 1rem; border-radius: 14px; text-align: center;
+                    color: white; height: 130px; display: flex;
+                    flex-direction: column; justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <span style="font-size: 2rem;">🚗</span>
+            <p style="margin-top: 10px; font-weight: 700; margin-bottom: 0;
+                      font-size: 0.9rem; line-height: 1.2;">
+                Gestión de Taller<br>(Placas)
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    with col4:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #2E3440 0%, #3A4150 100%);
+                    padding: 1.3rem 1rem; border-radius: 14px; text-align: center;
+                    color: white; height: 130px; display: flex;
+                    flex-direction: column; justify-content: center;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <span style="font-size: 2rem;">📅</span>
+            <p style="margin-top: 10px; font-weight: 700; margin-bottom: 0;
+                      font-size: 0.9rem; line-height: 1.2;">
+                Tareas y<br>Recordatorios
+            </p>
         </div>
         """, unsafe_allow_html=True)
 
-# ==========================================================
-# SECCIÓN AUTOPARTES
-# ==========================================================
-elif menu == "🔩 Autopartes":
-    st.markdown("## 🔩 Catálogo de Autopartes")
-    tab1, tab2 = st.tabs(["🔍 Buscar Pieza", "➕ Registrar Pieza"])
-    
-    with tab1:
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            codigo_buscar = st.text_input("Código de la pieza", placeholder="Ej: MOT-001").upper()
-        with col2:
-            st.markdown("<br>", unsafe_allow_html=True)
-            buscar = st.button("🔍 Buscar", use_container_width=True)
-        
-        if buscar and codigo_buscar:
-            pieza = buscar_por_codigo(codigo_buscar)
-            if pieza:
-                st.markdown(f"""
-                <div class="ficha-card">
-                    <h2>🔧 {pieza['nombre']} <span style="color:#E63946;font-size:1rem;">[{pieza['codigo']}]</span></h2>
-                </div>
-                """, unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
-                # Mostrar foto si existe
-                if pieza["foto"] and os.path.exists(pieza["foto"]):
-                    col_foto, col_info = st.columns([1, 2])
-                    with col_foto:
-                        st.image(pieza["foto"], caption=pieza["nombre"], use_container_width=True)
-                    with col_info:
-                        st.markdown(f"""
-                        <div class="ficha-item">
-                            <div class="label">📷 Imagen de referencia</div>
-                            <div class="value">Foto real de la pieza en el taller.</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    st.markdown("<br>", unsafe_allow_html=True)
+    # --- ESTADO DEL VEHÍCULO EN PRÁCTICA ---
+    st.markdown("#### Status del Vehículo en Práctica")
+    st.markdown("""
+    <div style="background: #F8F9FA; padding: 1.1rem 1.2rem; border-radius: 12px;
+                border-left: 5px solid #28A745; display: flex;
+                justify-content: space-between; align-items: center;
+                box-shadow: 0 3px 10px rgba(0,0,0,0.06);">
+        <div>
+            <p style="margin: 0; font-size: 0.78rem; color: #6C757D;
+                      text-transform: uppercase; letter-spacing: 1px;">
+                Placa registrada
+            </p>
+            <h3 style="margin: 0.2rem 0 0 0; color: #212529; font-weight: 800;
+                       font-size: 1.4rem;">ABC-123</h3>
+        </div>
+        <div style="display: flex; align-items: center;">
+            <span style="font-size: 0.85rem; color: #28A745; font-weight: 700;
+                         margin-right: 8px;">ACTIVO</span>
+            <span style="width: 14px; height: 14px; background: #28A745;
+                         border-radius: 50%; box-shadow: 0 0 10px #28A745;"></span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-                c1, c2 = st.columns(2)
-                with c1:
-                    st.markdown(f"""
-                    <div class="ficha-item">
-                        <div class="label">🎯 Función</div>
-                        <div class="value">{pieza['funcion']}</div>
-                    </div>
-                    <div class="ficha-item">
-                        <div class="label">📍 Ubicación</div>
-                        <div class="value">{pieza['ubicacion']}</div>
-                    </div>
-                    <div class="ficha-item">
-                        <div class="label">📐 Especificaciones</div>
-                        <div class="value">{pieza['especificaciones']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with c2:
-                    st.markdown(f"""
-                    <div class="ficha-item warning">
-                        <div class="label">⚠️ Fallas comunes</div>
-                        <div class="value">{pieza['fallas_comunes']}</div>
-                    </div>
-                    <div class="ficha-item warning">
-                        <div class="label">🧠 Causas</div>
-                        <div class="value">{pieza['causas']}</div>
-                    </div>
-                    <div class="ficha-item danger">
-                        <div class="label">🔔 Señales de falla</div>
-                        <div class="value">{pieza['senales']}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.error(f"❌ No existe ninguna pieza con el código *{codigo_buscar}*.")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # --- MENSAJES DEL DOCENTE ---
+    st.markdown("#### Mensajes del Docente / Actividad")
+    st.markdown("""
+    <div style="background: #FFF8F0; padding: 1rem 1.2rem; border-radius: 10px;
+                border-left: 4px solid #F4A261; margin-bottom: 10px;">
+        <p style="margin: 0; color: #212529; font-size: 0.95rem;">
+            📢 <b>Aviso:</b> Recuerda revisar el nivel de aceite antes de encender el motor de práctica.
+        </p>
+    </div>
+    <div style="background: #FFF8F0; padding: 1rem 1.2rem; border-radius: 10px;
+                border-left: 4px solid #F4A261;">
+        <p style="margin: 0; color: #212529; font-size: 0.95rem;">
+            📢 <b>Tarea:</b> Identificar 5 fallas comunes del sistema de frenos y subirlas a la plataforma.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- BARRA DE NAVEGACIÓN INFERIOR (Visual) ---
+st.markdown("""
+<style>
+    /* Ocultar el menú de hamburguesa y el footer por defecto */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     
-    with tab2:
-        st.markdown("#### 📝 Datos de la nueva autoparte")
-        
-        foto_subida = st.file_uploader(
-            "📷 Sube una foto de la pieza (JPG, PNG)",
-            type=["jpg", "jpeg", "png", "webp"],
-            help="La foto se guardará junto con la ficha técnica de la pieza."
-        )
-        
-        if foto_subida is not None:
-            st.image(foto_subida, caption="Vista previa", width=250)
-        
-        with st.form("form_parte", clear_on_submit=True):
-            c1, c2 = st.columns(2)
-            with c1:
-                c = st.text_input("Código único *", placeholder="MOT-002")
-                n = st.text_input("Nombre de la pieza *", placeholder="Bomba de agua")
-                f = st.text_area("Función", height=80)
-                u = st.text_input("Ubicación en el vehículo")
-            with c2:
-                e = st.text_input("Especificaciones técnicas")
-                fa = st.text_area("Fallas comunes", height=80)
-                ca = st.text_area("Causas probables", height=80)
-                se = st.text_area("Señales de falla", height=80)
-            
-            if st.form_submit_button("💾 Guardar Autoparte", use_container_width=True):
-                if c and n:
-                    ruta_foto = None
-                    if foto_subida is not None:
-                        from parts import guardar_foto
-                        ruta_foto = guardar_foto(foto_subida, c.upper())
-                    
-                    agregar_parte(c.upper(), n, f, u, e, fa, ca, se, ruta_foto)
-                    st.success(f"✅ Pieza *{n}* registrada con código {c.upper()}.")
-                    st.balloons()
-                else:
-                    st.error("Los campos marcados con * son obligatorios.")
+    /* Crear la barra inferior */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #1C2A45;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+        z-index: 9999;
+    }
+    .bottom-nav-item {
+        color: #A8B2BD;
+        text-align: center;
+        font-size: 0.7rem;
+        text-decoration: none;
+        flex: 1;
+    }
+    .bottom-nav-item.active {
+        color: #F4B41A;
+        font-weight: bold;
+    }
+    .bottom-nav-icon {
+        display: block;
+        font-size: 1.3rem;
+        margin-bottom: 4px;
+    }
+</style>
+
+<div class="bottom-nav">
+    <div class="bottom-nav-item active">
+        <span class="bottom-nav-icon">🏠</span>
+        Inicio
+    </div>
+    <div class="bottom-nav-item">
+        <span class="bottom-nav-icon">📷</span>
+        Escanear
+    </div>
+    <div class="bottom-nav-item">
+        <span class="bottom-nav-icon">⏱️</span>
+        Historial
+    </div>
+    <div class="bottom-nav-item">
+        <span class="bottom-nav-icon">🚗</span>
+        Taller
+    </div>
+    <div class="bottom-nav-item">
+        <span class="bottom-nav-icon">⚙️</span>
+        Ajustes
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ==========================================================
 # SECCIÓN VEHÍCULOS
 # ==========================================================
-elif menu == "🚗 Vehículos":
+if menu == "🚗 Vehículos":
     st.markdown("## 🚗 Gestión de Vehículos")
     tab1, tab2, tab3 = st.tabs(["➕ Registrar", "🔍 Buscar", "📋 Historial"])
     
