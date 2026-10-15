@@ -187,50 +187,6 @@ def obtener_estadisticas():
     return partes, vehiculos, mantenimientos, pendientes
 
 # ==========================================================
-# HEADER PRINCIPAL
-# ==========================================================
-st.markdown("""
-<div class="main-header">
-    <h1>🔧 MECÁNICA SYSTEM</h1>
-    <p>Plataforma de educación y gestión automotriz · v2.0 PRO</p>
-</div>
-""", unsafe_allow_html=True)
-
-# ==========================================================
-# DASHBOARD (solo en la vista principal)
-# ==========================================================
-partes_count, vehiculos_count, mantenimientos_count, pendientes_count = obtener_estadisticas()
-
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <p class="kpi-number">{partes_count}</p>
-        <p class="kpi-label">🔩 Autopartes</p>
-    </div>""", unsafe_allow_html=True)
-with c2:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <p class="kpi-number">{vehiculos_count}</p>
-        <p class="kpi-label">🚗 Vehículos</p>
-    </div>""", unsafe_allow_html=True)
-with c3:
-    st.markdown(f"""
-    <div class="kpi-card">
-        <p class="kpi-number">{mantenimientos_count}</p>
-        <p class="kpi-label">🛠️ Servicios</p>
-    </div>""", unsafe_allow_html=True)
-with c4:
-    color = "#E63946" if pendientes_count > 0 else "#2A9D8F"
-    st.markdown(f"""
-    <div class="kpi-card">
-        <p class="kpi-number" style="color:{color};">{pendientes_count}</p>
-        <p class="kpi-label">🔔 Alertas</p>
-    </div>""", unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# ==========================================================
 # SIDEBAR - NAVEGACIÓN
 # ==========================================================
 with st.sidebar:
@@ -247,6 +203,52 @@ with st.sidebar:
     )
     st.markdown("---")
     st.caption("💡 *Tip:* Usa la cámara de tu celular para escanear los QR pegados en las piezas del motor.")
+
+if menu == "🏠 Inicio":
+    # ==========================================================
+    # HEADER PRINCIPAL
+    # ==========================================================
+    st.markdown("""
+    <div class="main-header">
+        <h1>🔧 MECÁNICA SYSTEM</h1>
+        <p>Plataforma de educación y gestión automotriz · v2.0 PRO</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ==========================================================
+    # DASHBOARD (solo en la vista principal)
+    # ==========================================================
+    partes_count, vehiculos_count, mantenimientos_count, pendientes_count = obtener_estadisticas()
+
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <p class="kpi-number">{partes_count}</p>
+            <p class="kpi-label">🔩 Autopartes</p>
+        </div>""", unsafe_allow_html=True)
+    with c2:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <p class="kpi-number">{vehiculos_count}</p>
+            <p class="kpi-label">🚗 Vehículos</p>
+        </div>""", unsafe_allow_html=True)
+    with c3:
+        st.markdown(f"""
+        <div class="kpi-card">
+            <p class="kpi-number">{mantenimientos_count}</p>
+            <p class="kpi-label">🛠️ Servicios</p>
+        </div>""", unsafe_allow_html=True)
+    with c4:
+        color = "#E63946" if pendientes_count > 0 else "#2A9D8F"
+        st.markdown(f"""
+        <div class="kpi-card">
+            <p class="kpi-number" style="color:{color};">{pendientes_count}</p>
+            <p class="kpi-label">🔔 Alertas</p>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
 
 # ==========================================================
 # SECCIÓN INICIO (Estilo App Móvil)
@@ -481,6 +483,92 @@ st.markdown("""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# ==========================================================
+# SECCIÓN AUTOPARTES
+# ==========================================================
+if menu == "🔩 Autopartes":
+    st.markdown("## 🔩 Biblioteca y registro de autopartes")
+    st.caption("Registra componentes del motor, consulta sus fichas y guarda sus datos para usarlos con los códigos QR.")
+
+    tab_registro, tab_buscar, tab_listado = st.tabs(["➕ Registrar autoparte", "🔎 Buscar autoparte", "📚 Todas las autopartes"])
+
+    with tab_registro:
+        with st.form("form_autoparte", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                codigo_parte = st.text_input("Código único *", placeholder="MOT-001").strip().upper()
+                nombre_parte = st.text_input("Nombre de la autoparte *", placeholder="Filtro de aceite").strip()
+                funcion_parte = st.text_area("Función", placeholder="¿Para qué sirve esta pieza?")
+                ubicacion_parte = st.text_input("Ubicación", placeholder="Sistema de lubricación")
+            with c2:
+                especificaciones_parte = st.text_area("Especificaciones técnicas", placeholder="Material, medidas, compatibilidad...")
+                fallas_parte = st.text_area("Fallas comunes", placeholder="Síntomas o averías frecuentes")
+                causas_parte = st.text_area("Causas", placeholder="Posibles causas de las fallas")
+                senales_parte = st.text_area("Señales de advertencia", placeholder="Ruidos, fugas, luces del tablero...")
+            foto_parte = st.file_uploader("Fotografía de la autoparte (opcional)", type=["png", "jpg", "jpeg", "webp"])
+            guardar_parte = st.form_submit_button("💾 Registrar autoparte", use_container_width=True)
+
+        if guardar_parte:
+            if not codigo_parte or not nombre_parte:
+                st.error("Completa los campos obligatorios: código y nombre.")
+            else:
+                ruta_foto = None
+                if foto_parte is not None:
+                    os.makedirs("fotos_partes", exist_ok=True)
+                    extension = foto_parte.name.rsplit(".", 1)[-1].lower() if "." in foto_parte.name else "jpg"
+                    ruta_foto = os.path.join("fotos_partes", f"{codigo_parte}.{extension}")
+                    with open(ruta_foto, "wb") as archivo_foto:
+                        archivo_foto.write(foto_parte.getbuffer())
+                try:
+                    agregar_parte(codigo_parte, nombre_parte, funcion_parte, ubicacion_parte,
+                                  especificaciones_parte, fallas_parte, causas_parte, senales_parte, ruta_foto)
+                    st.success(f"Autoparte '{nombre_parte}' registrada correctamente con el código {codigo_parte}.")
+                    st.info("Ya puedes generar un código QR desde la sección 📱 Códigos QR.")
+                except Exception as error:
+                    if "UNIQUE constraint failed" in str(error):
+                        st.error(f"El código {codigo_parte} ya existe. Usa un código único o busca la autoparte registrada.")
+                    else:
+                        st.error(f"No se pudo registrar la autoparte: {error}")
+
+    with tab_buscar:
+        codigo_busqueda = st.text_input("Código de autoparte", placeholder="MOT-001", key="buscar_parte_codigo").strip().upper()
+        nombre_busqueda = st.text_input("O buscar por nombre", placeholder="Filtro de aceite", key="buscar_parte_nombre").strip()
+        if st.button("🔍 Buscar", key="btn_buscar_parte", use_container_width=True):
+            conn = conectar()
+            try:
+                if codigo_busqueda:
+                    parte = conn.execute("SELECT * FROM partes WHERE codigo = ?", (codigo_busqueda,)).fetchone()
+                elif nombre_busqueda:
+                    parte = conn.execute("SELECT * FROM partes WHERE nombre LIKE ? ORDER BY nombre LIMIT 1", (f"%{nombre_busqueda}%",)).fetchone()
+                else:
+                    parte = None
+            finally:
+                conn.close()
+            if parte:
+                st.markdown(f"### {parte['nombre']} · `{parte['codigo']}`")
+                st.write("**Función:**", parte['funcion'] or "No registrada")
+                st.write("**Ubicación:**", parte['ubicacion'] or "No registrada")
+                st.write("**Especificaciones:**", parte['especificaciones'] or "No registradas")
+                st.write("**Fallas comunes:**", parte['fallas_comunes'] or "No registradas")
+                st.write("**Causas:**", parte['causas'] or "No registradas")
+                st.write("**Señales:**", parte['senales'] or "No registradas")
+                if parte['foto'] and os.path.exists(parte['foto']):
+                    st.image(parte['foto'], caption=parte['nombre'], width=320)
+            else:
+                st.warning("No se encontró la autoparte. Verifica el código o registra una nueva.")
+
+    with tab_listado:
+        conn = conectar()
+        try:
+            partes_guardadas = conn.execute("SELECT codigo, nombre, ubicacion FROM partes ORDER BY nombre COLLATE NOCASE").fetchall()
+        finally:
+            conn.close()
+        if partes_guardadas:
+            st.dataframe([dict(fila) for fila in partes_guardadas], use_container_width=True, hide_index=True)
+            st.caption(f"Total de autopartes registradas: {len(partes_guardadas)}")
+        else:
+            st.info("Todavía no hay autopartes registradas. Usa la pestaña 'Registrar autoparte' para comenzar.")
 
 # ==========================================================
 # SECCIÓN VEHÍCULOS

@@ -26,8 +26,9 @@ def agregar_parte(codigo, nombre, funcion, ubicacion,
               especificaciones, fallas, causas, senales, foto))
         conn.commit()
         print(f"✅ Parte '{nombre}' registrada con código {codigo}.")
-    except Exception as e:
-        print(f"⚠️ Error: {e}")
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
