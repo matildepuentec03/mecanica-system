@@ -807,7 +807,7 @@ elif menu == "📱 Códigos QR":
                     ruta = generar_qr(payload, tipo="vehiculo")
                     st.image(ruta, caption=f"QR del vehículo {vehiculo['placa']}", width=250)
                     with open(ruta, "rb") as archivo:
-                        st.download_button("⬇️ Descargar QR", archivo, file_name=f"QR_{vehiculo['placa']}.png", mime="image/png")
+        st.download_button("⬇️ Descargar QR", archivo, file_name=f"QR_{vehiculo['placa']}.png", mime="image/png")
                     st.success("QR del vehículo generado correctamente.")
                 else:
                     st.warning("No se encontró ese vehículo. Regístralo primero en Vehículos.")
