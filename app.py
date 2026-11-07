@@ -1,9 +1,23 @@
-import streamlit as st
 import os
+import sys
+import subprocess
+import streamlit as st
+
+# ==========================================================
+# 🚀 AUTO-LANZADOR PARA VS CODE (Botón "Play")
+# ==========================================================
+# Si el código detecta que se ejecutó sin el servidor de Streamlit (ej. usando
+# el botón Play de VS Code), lanza el servidor automáticamente y se auto-cierra.
+from streamlit.runtime import exists
+if not exists():
+    print("🚀 Iniciando Mecánica System PRO automáticamente en tu navegador...")
+    subprocess.run([sys.executable, "-m", "streamlit", "run", __file__])
+    sys.exit()
+
 from datetime import datetime, timedelta
 from database import conectar, crear_tablas
 from parts import agregar_parte, buscar_por_codigo
-from qr_module import generar_qr
+from qr_module import generar_qr, leer_qr_desde_bytes, crear_contenido_qr
 from vehicles import registrar_vehiculo, buscar_vehiculo, historial
 from maintenance import registrar_mantenimiento
 
@@ -174,17 +188,22 @@ st.markdown("""
 # ==========================================================
 def obtener_estadisticas():
     conn = conectar()
-    partes = conn.execute("SELECT COUNT(*) as c FROM partes").fetchone()["c"]
-    vehiculos = conn.execute("SELECT COUNT(*) as c FROM vehiculos").fetchone()["c"]
-    mantenimientos = conn.execute("SELECT COUNT(*) as c FROM mantenimientos").fetchone()["c"]
-    hoy = datetime.now().date()
-    limite = hoy + timedelta(days=15)
-    pendientes = conn.execute("""
-        SELECT COUNT(*) as c FROM mantenimientos
-        WHERE date(proxima_revision) <= date(?)
-    """, (limite.strftime("%Y-%m-%d"),)).fetchone()["c"]
-    conn.close()
-    return partes, vehiculos, mantenimientos, pendientes
+    try:
+        partes = conn.execute("SELECT COUNT(*) as c FROM partes").fetchone()["c"]
+        vehiculos = conn.execute("SELECT COUNT(*) as c FROM vehiculos").fetchone()["c"]
+        mantenimientos = conn.execute("SELECT COUNT(*) as c FROM mantenimientos").fetchone()["c"]
+        hoy = datetime.now().date()
+        limite = hoy + timedelta(days=15)
+        pendientes = conn.execute("""
+            SELECT COUNT(*) as c FROM mantenimientos
+            WHERE date(proxima_revision) <= date(?)
+        """, (limite.strftime("%Y-%m-%d"),)).fetchone()["c"]
+        return partes, vehiculos, mantenimientos, pendientes
+    except Exception as e:
+        st.error(f"Error al cargar estadísticas: {e}")
+        return 0, 0, 0, 0
+    finally:
+        conn.close()
 
 # ==========================================================
 # HEADER PRINCIPAL
@@ -235,16 +254,15 @@ st.markdown("<br>", unsafe_allow_html=True)
 # ==========================================================
 with st.sidebar:
     st.markdown("### 🔧 MENÚ PRINCIPAL")
+    opciones_menu = [
+        "🏠 Inicio", "🔩 Autopartes", "🚗 Vehículos",
+        "🗓️ Mantenimiento", "📱 Códigos QR"
+    ]
+    if "menu_nav" not in st.session_state:
+        st.session_state.menu_nav = "🏠 Inicio"
     menu = st.radio(
-        "Selecciona una sección:",
-        [
-            "🏠 Inicio",
-            "🔩 Autopartes",
-            "🚗 Vehículos",
-            "🗓️ Mantenimiento",
-            "📱 Códigos QR"
-        ],
-        label_visibility="collapsed"
+        "Selecciona una sección:", opciones_menu,
+        key="menu_nav", label_visibility="collapsed"
     )
     st.markdown("---")
     st.caption("💡 *Tip:* Usa la cámara de tu celular para escanear los QR pegados en las piezas del motor.")
@@ -284,7 +302,7 @@ if menu == "🏠 Inicio":
     # --- BOTÓN AMARILLO DE ESCANEAR QR ---
     st.markdown("""
     <style>
-        div.stButton > button {
+        div.stButton > button#btn_qr_inicio {
             background: linear-gradient(90deg, #F4B41A 0%, #E8A317 100%) !important;
             color: #1C2A45 !important;
             font-size: 1.15rem !important;
@@ -296,15 +314,18 @@ if menu == "🏠 Inicio":
             width: 100% !important;
             letter-spacing: 1px !important;
         }
-        div.stButton > button:hover {
+        div.stButton > button#btn_qr_inicio:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 22px rgba(244, 180, 26, 0.6) !important;
         }
     </style>
     """, unsafe_allow_html=True)
     
-    if st.button("📷  ESCANEAR CÓDIGO QR", use_container_width=True, key="btn_qr_inicio"):
-        st.info("💡 Apunta la cámara de tu celular al QR pegado en la pieza. Luego busca el código en la sección *Autopartes*.")
+    def ir_a_escaner_qr():
+        st.session_state.menu_nav = "📱 Códigos QR"
+
+    st.button("📷  ESCANEAR CÓDIGO QR", use_container_width=True,
+              key="btn_qr_inicio", on_click=ir_a_escaner_qr)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -418,72 +439,73 @@ if menu == "🏠 Inicio":
     </div>
     """, unsafe_allow_html=True)
 
-# --- BARRA DE NAVEGACIÓN INFERIOR (Visual) ---
-st.markdown("""
-<style>
-    /* Ocultar el menú de hamburguesa y el footer por defecto */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
+# ==========================================================
+# SECCIÓN AUTOPARTES
+# ==========================================================
+elif menu == "🔩 Autopartes":
+    st.markdown("## 🔩 Gestión de Autopartes")
+    tab1, tab2 = st.tabs(["➕ Registrar Pieza", "🔍 Buscar Pieza"])
     
-    /* Crear la barra inferior */
-    .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: #1C2A45;
-        display: flex;
-        justify-content: space-around;
-        padding: 10px 0;
-        box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
-        z-index: 9999;
-    }
-    .bottom-nav-item {
-        color: #A8B2BD;
-        text-align: center;
-        font-size: 0.7rem;
-        text-decoration: none;
-        flex: 1;
-    }
-    .bottom-nav-item.active {
-        color: #F4B41A;
-        font-weight: bold;
-    }
-    .bottom-nav-icon {
-        display: block;
-        font-size: 1.3rem;
-        margin-bottom: 4px;
-    }
-</style>
+    with tab1:
+        with st.form("form_autoparte", clear_on_submit=True):
+            st.markdown("### Registro de nueva autoparte didáctica")
+            c1, c2 = st.columns(2)
+            with c1:
+                codigo = st.text_input("Código de la pieza *", placeholder="MOT-001").upper()
+                nombre = st.text_input("Nombre de la pieza *", placeholder="Bomba de agua")
+                funcion = st.text_area("Función principal", height=100)
+            with c2:
+                ubicacion = st.text_input("Ubicación en el vehículo", placeholder="Bloque del motor")
+                especificaciones = st.text_area("Especificaciones técnicas", height=100)
+                
+            st.markdown("#### Diagnóstico (Opcional)")
+            c3, c4, c5 = st.columns(3)
+            with c3:
+                fallas_comunes = st.text_area("Fallas comunes")
+            with c4:
+                causas = st.text_area("Causas principales")
+            with c5:
+                senales = st.text_area("Señales de alerta")
+            
+            if st.form_submit_button("💾 Guardar Autoparte", use_container_width=True):
+                if codigo and nombre:
+                    try:
+                        agregar_parte(codigo, nombre, funcion, ubicacion, especificaciones, fallas_comunes, causas, senales, "")
+                        st.success(f"✅ Autoparte **{codigo}** registrada exitosamente.")
+                        st.balloons()
+                    except TypeError:
+                        st.warning("⚠️ Hay una discrepancia con los argumentos de `agregar_parte` en tu archivo `parts.py`.")
+                else:
+                    st.error("Los campos Código y Nombre son obligatorios.")
 
-<div class="bottom-nav">
-    <div class="bottom-nav-item active">
-        <span class="bottom-nav-icon">🏠</span>
-        Inicio
-    </div>
-    <div class="bottom-nav-item">
-        <span class="bottom-nav-icon">📷</span>
-        Escanear
-    </div>
-    <div class="bottom-nav-item">
-        <span class="bottom-nav-icon">⏱️</span>
-        Historial
-    </div>
-    <div class="bottom-nav-item">
-        <span class="bottom-nav-icon">🚗</span>
-        Taller
-    </div>
-    <div class="bottom-nav-item">
-        <span class="bottom-nav-icon">⚙️</span>
-        Ajustes
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    with tab2:
+        codigo_buscar = st.text_input("Ingresa el código de la pieza", placeholder="MOT-001").upper()
+        if st.button("🔍 Buscar Pieza"):
+            p = buscar_por_codigo(codigo_buscar)
+            if p:
+                st.markdown(f"""
+                <div class="ficha-card">
+                    <h2>🔩 {p['nombre']} <span style="color:#E63946;font-size:1rem;">[{p['codigo']}]</span></h2>
+                </div>
+                """, unsafe_allow_html=True)
+                st.write("**Función:**", p.get('funcion', 'No registrada'))
+                st.write("**Ubicación:**", p.get('ubicacion', 'No registrada'))
+                st.write("**Especificaciones:**", p.get('especificaciones', 'No registradas'))
+                
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    st.info(f"**Fallas:**\n{p.get('fallas_comunes', 'No registradas')}")
+                with c2:
+                    st.warning(f"**Causas:**\n{p.get('causas', 'No registradas')}")
+                with c3:
+                    st.error(f"**Señales:**\n{p.get('senales', 'No registradas')}")
+            else:
+                st.warning("🔍 Autoparte no encontrada.")
 
 # ==========================================================
 # SECCIÓN VEHÍCULOS
 # ==========================================================
-if menu == "🚗 Vehículos":
+elif menu == "🚗 Vehículos":
     st.markdown("## 🚗 Gestión de Vehículos")
     tab1, tab2, tab3 = st.tabs(["➕ Registrar", "🔍 Buscar", "📋 Historial"])
     
@@ -491,7 +513,7 @@ if menu == "🚗 Vehículos":
         with st.form("form_vehiculo", clear_on_submit=True):
             c1, c2 = st.columns(2)
             with c1:
-                placa = st.text_input("Placa *", placeholder="ABC-123")
+                placa = st.text_input("Placa *", placeholder="ABC-123").upper()
                 marca = st.text_input("Marca *", placeholder="Toyota")
                 modelo = st.text_input("Modelo", placeholder="Corolla")
             with c2:
@@ -502,7 +524,7 @@ if menu == "🚗 Vehículos":
             if st.form_submit_button("💾 Registrar Vehículo", use_container_width=True):
                 if placa and marca:
                     registrar_vehiculo(placa, marca, modelo, anio, prop, km)
-                    st.success(f"✅ Vehículo *{placa.upper()}* registrado.")
+                    st.success(f"✅ Vehículo **{placa}** registrado exitosamente.")
                     st.balloons()
                 else:
                     st.error("La placa y la marca son obligatorias.")
@@ -589,61 +611,213 @@ elif menu == "🗓️ Mantenimiento":
             hoy = datetime.now().date()
             limite = hoy + timedelta(days=15)
             conn = conectar()
-            filas = conn.execute("""
-                SELECT v.placa, v.marca, v.modelo, m.tipo, m.descripcion, m.proxima_revision
-                FROM mantenimientos m
-                JOIN vehiculos v ON v.placa = m.placa
-                WHERE date(m.proxima_revision) <= date(?)
-            """, (limite.strftime("%Y-%m-%d"),)).fetchall()
-            conn.close()
-            
-            if filas:
-                for f in filas:
-                    st.markdown(f"""
-                    <div class="ficha-item danger">
-                        <div class="label">🚗 {f['placa']} · {f['marca']} {f['modelo']}</div>
-                        <div class="value"><b>{f['tipo'].replace('_',' ').title()}</b> vence el {f['proxima_revision']}<br>
-                        <small style="color:#A8B2BD;">{f['descripcion']}</small></div>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.success("🎉 No hay recordatorios pendientes por ahora.")
+            try:
+                filas = conn.execute("""
+                    SELECT v.placa, v.marca, v.modelo, m.tipo, m.descripcion, m.proxima_revision
+                    FROM mantenimientos m
+                    JOIN vehiculos v ON v.placa = m.placa
+                    WHERE date(m.proxima_revision) <= date(?)
+                """, (limite.strftime("%Y-%m-%d"),)).fetchall()
+                
+                if filas:
+                    for f in filas:
+                        st.markdown(f"""
+                        <div class="ficha-item danger">
+                            <div class="label">🚗 {f['placa']} · {f['marca']} {f['modelo']}</div>
+                            <div class="value"><b>{f['tipo'].replace('_',' ').title()}</b> vence el {f['proxima_revision']}<br>
+                            <small style="color:#A8B2BD;">{f['descripcion']}</small></div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.success("🎉 No hay recordatorios pendientes por ahora.")
+            finally:
+                conn.close()
 
 # ==========================================================
-# SECCIÓN QR
+# SECCIÓN QR: escaneo, búsqueda y generador
 # ==========================================================
 elif menu == "📱 Códigos QR":
-    st.markdown("## 📱 Generador de Códigos QR")
-    st.caption("Genera los QR que pegarás físicamente en las piezas del motor.")
-    
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        codigo_qr = st.text_input("Código de la pieza", placeholder="MOT-001").upper()
-    with c2:
-        st.markdown("<br>", unsafe_allow_html=True)
-        generar = st.button("🎨 Generar QR", use_container_width=True)
-    
-    if generar and codigo_qr:
-        pieza = buscar_por_codigo(codigo_qr)
-        if pieza:
-            ruta = generar_qr(codigo_qr)
-            c1, c2 = st.columns([1, 2])
-            with c1:
-                st.image(ruta, caption=f"QR: {codigo_qr}", width=250)
-            with c2:
-                st.markdown(f"""
-                <div class="ficha-card">
-                    <h2>✅ QR Generado</h2>
-                    <div class="ficha-item">
-                        <div class="label">Pieza asociada</div>
-                        <div class="value">{pieza['nombre']}</div>
-                    </div>
-                    <div class="ficha-item">
-                        <div class="label">Ubicación</div>
-                        <div class="value">{pieza['ubicacion']}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                st.info("💡 Imprime esta imagen y pégala en la pieza física. Al escanearla con tu celular, se abrirá la ficha técnica completa.")
+    st.markdown("## 📱 Escáner y generador de códigos QR")
+    st.caption("Escanea con la cámara del celular o computadora, o sube una foto del QR.")
+
+    tab_scan, tab_generate = st.tabs(["📷 Escanear QR", "🏷️ Generar QR"])
+    with tab_scan:
+        # CONTENEDOR AISLADO: Evita el error 'removeChild' on 'Node' en React
+        with st.container():
+            foto_qr = st.camera_input("Apunta la cámara al código QR", key="camara_qr")
+            archivo_qr = st.file_uploader("O sube una imagen del QR", type=["png", "jpg", "jpeg"], key="archivo_qr")
+        
+        fuente = foto_qr or archivo_qr
+        
+        if fuente is not None:
+            try:
+                resultado_qr = leer_qr_desde_bytes(fuente.getvalue())
+                st.success(f"✅ QR leído. Identificador: {resultado_qr['id']}")
+                tipo_qr = resultado_qr["tipo"]
+                ident = resultado_qr["id"]
+                datos_qr = resultado_qr.get("datos", {})
+                registro = None
+                tipo_resuelto = tipo_qr
+
+                if tipo_qr in ("autoparte", "parte"):
+                    registro = buscar_por_codigo(ident)
+                    tipo_resuelto = "autoparte"
+                elif tipo_qr == "vehiculo":
+                    registro = buscar_vehiculo(ident)
+                elif tipo_qr == "mantenimiento":
+                    conn = conectar()
+                    try:
+                        registro = conn.execute("SELECT * FROM mantenimientos WHERE CAST(id AS TEXT) = ?", (ident,)).fetchone()
+                    finally:
+                        conn.close()
+                else:
+                    # Compatibilidad con QR anteriores
+                    registro = buscar_por_codigo(ident)
+                    if registro:
+                        tipo_resuelto = "autoparte"
+                    else:
+                        registro = buscar_vehiculo(ident)
+                        tipo_resuelto = "vehiculo" if registro else "auto"
+
+                if not registro:
+                    st.warning("No se encontró ese registro en la base de datos. Verifica el código o regístralo primero.")
+                    if datos_qr:
+                        st.caption("Datos complementarios leídos del QR:")
+                        st.json(datos_qr)
+                        
+                elif tipo_resuelto == "autoparte":
+                    st.markdown("### 🔩 Ficha de autoparte")
+                    st.markdown(f"**{registro['nombre']}** · Código: `{registro['codigo']}`")
+                    st.write("**Función:**", registro.get('funcion', "No registrada"))
+                    st.write("**Ubicación:**", registro.get('ubicacion', "No registrada"))
+                    st.write("**Especificaciones:**", registro.get('especificaciones', "No registradas"))
+                    st.write("**Fallas comunes:**", registro.get('fallas_comunes', "No registradas"))
+                    st.write("**Causas:**", registro.get('causas', "No registradas"))
+                    st.write("**Señales:**", registro.get('senales', "No registradas"))
+                    if registro.get('foto') and os.path.exists(registro['foto']):
+                        st.image(registro['foto'], caption=registro['nombre'], width=300)
+                        
+                elif tipo_resuelto == "vehiculo":
+                    st.markdown("### 🚗 Ficha de vehículo")
+                    st.markdown(f"**{registro.get('marca', '')} {registro.get('modelo', '')}** · Placa: `{registro['placa']}`")
+                    st.write("**Año:**", registro.get('anio', "No registrado"))
+                    st.write("**Propietario:**", registro.get('propietario', "No registrado"))
+                    st.write("**Kilometraje:**", f"{registro.get('kilometraje', 0)} km")
+                    
+                    st.markdown("#### 🛠️ Historial de mantenimiento")
+                    registros_hist = historial(registro['placa'])
+                    if registros_hist:
+                        for item in registros_hist:
+                            st.write(f"• {item['fecha']} · **{item['tipo']}** — {item['descripcion']} (Próxima revisión: {item['proxima_revision']})")
+                    else:
+                        st.info("Este vehículo todavía no tiene mantenimientos registrados.")
+                        
+                elif tipo_resuelto == "mantenimiento":
+                    st.markdown("### 🛠️ Ficha de mantenimiento")
+                    st.write("**Placa:**", registro['placa'])
+                    st.write("**Tipo:**", registro.get('tipo', "No registrado"))
+                    st.write("**Descripción:**", registro.get('descripcion', "No registrada"))
+                    st.write("**Fecha:**", registro.get('fecha', "No registrada"))
+                    st.write("**Próxima revisión:**", registro.get('proxima_revision', "No registrada"))
+                    
+                if datos_qr:
+                    with st.expander("Datos complementarios incluidos en el QR"):
+                        st.json(datos_qr)
+                        
+            except (ValueError, RuntimeError) as error:
+                st.error(str(error))
+            except Exception as error:
+                st.error(f"No se pudo procesar el QR: {error}")
+
+    with tab_generate:
+        tipo_generar = st.selectbox("Tipo de registro", ["Autoparte", "Vehículo"])
+        if tipo_generar == "Autoparte":
+            codigo_qr = st.text_input("Código de la autoparte", placeholder="MOT-001").strip().upper()
+            if st.button("🎨 Generar QR de autoparte", use_container_width=True):
+                pieza = buscar_por_codigo(codigo_qr) if codigo_qr else None
+                if pieza:
+                    payload = crear_contenido_qr("autoparte", pieza['codigo'], {"nombre": pieza['nombre']})
+                    ruta = generar_qr(payload, tipo="autoparte")
+                    st.image(ruta, caption=f"QR de {pieza['codigo']}", width=250)
+                    with open(ruta, "rb") as archivo:
+                        st.download_button("⬇️ Descargar QR", archivo, file_name=f"QR_{pieza['codigo']}.png", mime="image/png")
+                    st.success(f"QR listo para {pieza['nombre']}.")
+                else:
+                    st.warning("No se encontró esa autoparte. Regístrala primero en Autopartes.")
         else:
-            st.warning(f"⚠️ La pieza {codigo_qr} no está registrada. Regístrala primero en la sección **Autopartes**.")
+            placa_qr = st.text_input("Placa del vehículo", placeholder="ABC-123").strip().upper()
+            if st.button("🎨 Generar QR de vehículo", use_container_width=True):
+                vehiculo = buscar_vehiculo(placa_qr) if placa_qr else None
+                if vehiculo:
+                    payload = crear_contenido_qr("vehiculo", vehiculo['placa'], {"marca": vehiculo['marca'], "modelo": vehiculo['modelo']})
+                    ruta = generar_qr(payload, tipo="vehiculo")
+                    st.image(ruta, caption=f"QR del vehículo {vehiculo['placa']}", width=250)
+                    with open(ruta, "rb") as archivo:
+                        st.download_button("⬇️ Descargar QR", archivo, file_name=f"QR_{vehiculo['placa']}.png", mime="image/png")
+                    st.success("QR del vehículo generado correctamente.")
+                else:
+                    st.warning("No se encontró ese vehículo. Regístralo primero en Vehículos.")
+
+# ==========================================================
+# BARRA DE NAVEGACIÓN INFERIOR (Visual / Mockup)
+# ==========================================================
+st.markdown("""
+<style>
+    /* Ocultar el menú de hamburguesa y el footer por defecto */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Crear la barra inferior */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: #1C2A45;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0;
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.3);
+        z-index: 9999;
+    }
+    .bottom-nav-item {
+        color: #A8B2BD;
+        text-align: center;
+        font-size: 0.7rem;
+        text-decoration: none;
+        flex: 1;
+    }
+    .bottom-nav-item.active {
+        color: #F4B41A;
+        font-weight: bold;
+    }
+    .bottom-nav-icon {
+        display: block;
+        font-size: 1.3rem;
+        margin-bottom: 4px;
+    }
+</style>
+
+<div class="bottom-nav">
+    <div class="bottom-nav-item active">
+        <span class="bottom-nav-icon">🏠</span>
+        Inicio
+    </div>
+    <div class="bottom-nav-item">
+        <span class="bottom-nav-icon">📷</span>
+        Escanear
+    </div>
+    <div class="bottom-nav-item">
+        <span class="bottom-nav-icon">⏱️</span>
+        Historial
+    </div>
+    <div class="bottom-nav-item">
+        <span class="bottom-nav-icon">🚗</span>
+        Taller
+    </div>
+    <div class="bottom-nav-item">
+        <span class="bottom-nav-icon">⚙️</span>
+        Ajustes
+    </div>
+</div>
+""", unsafe_allow_html=True)
